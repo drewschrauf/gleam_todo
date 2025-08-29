@@ -1,0 +1,59 @@
+import envoy
+import gleam/dynamic/decode
+import gleam/json
+import gleam/string
+import pog
+import wisp.{type Request, type Response}
+
+pub type Context {
+  Context(db: pog.Connection)
+}
+
+fn logger(req: Request, next: fn() -> Response) {
+  case envoy.get("ENVIRONMENT") {
+    Ok("test") -> next()
+    _ -> wisp.log_request(req, next)
+  }
+}
+
+pub fn middleware(req: Request, handle_request: fn(Request) -> Response) {
+  let req = wisp.method_override(req)
+  use <- logger(req)
+  use <- wisp.rescue_crashes()
+  use req <- wisp.handle_head(req)
+  handle_request(req)
+}
+
+pub fn require_decoded_json(
+  req: Request,
+  decoder: decode.Decoder(a),
+  next: fn(a) -> Response,
+) -> Response {
+  use json <- wisp.require_json(req)
+  case decode.run(json, decoder) {
+    Ok(data) -> next(data)
+    Error(errors) -> {
+      json.array(errors, fn(error) {
+        json.object([
+          #("expected", json.string(error.expected)),
+          #("found", json.string(error.found)),
+          #("path", json.string(error.path |> string.join("."))),
+        ])
+      })
+      |> json.to_string_tree()
+      |> wisp.json_response(400)
+    }
+  }
+}
+
+/// Converts a parameter using the provided decoder. If the decoder fails, returns a 404.
+pub fn require_decoded_param(
+  param: a,
+  decoder: fn(a) -> Result(b, _),
+  next: fn(b) -> Response,
+) {
+  case decoder(param) {
+    Ok(decoded) -> next(decoded)
+    Error(_) -> wisp.not_found()
+  }
+}
