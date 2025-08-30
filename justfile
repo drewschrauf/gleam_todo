@@ -2,10 +2,17 @@ set tempdir := "."
 
 [working-directory: 'backend']
 db:
-  docker run --rm --name gleam_todo -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres
+  docker run --rm --name gleam_todo -p 5432:5432 -e POSTGRES_PASSWORD=postgres -v gleam_todo_pgdata:/var/lib/postgresql/data postgres
+
+[parallel]
+dev: dev-backend dev-frontend
+
+[working-directory: 'frontend']
+dev-frontend:
+  gleam run -m lustre/dev start
 
 [working-directory: 'backend']
-dev:
+dev-backend:
   rg -l . | entr -cdr gleam run
 
 [working-directory: 'backend']
@@ -31,4 +38,4 @@ test-watch:
     sleep 1;
   done
   DATABASE_URL=postgres://postgres:postgres@localhost:5555/postgres gleam run -m cigogne last
-  rg -l . | ENVIRONMENT=test entr -cdr gleam test
+  rg -l . . ../shared | ENVIRONMENT=test entr -cdr gleam test

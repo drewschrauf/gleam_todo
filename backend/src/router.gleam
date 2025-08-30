@@ -2,7 +2,8 @@ import gleam/dynamic/decode
 import gleam/http
 import gleam/json
 import gleam/string_tree
-import task/task
+import shared/task
+import task/task as task_db
 import web.{type Context}
 import wisp.{type Request, type Response}
 import youid/uuid
@@ -20,7 +21,7 @@ pub fn handle_request(req: Request, ctx: Context) {
 }
 
 fn handle_get_all_tasks(_req: Request, ctx: Context) -> Response {
-  let assert Ok(tasks) = task.get_all_tasks(ctx.db)
+  let assert Ok(tasks) = task_db.get_all_tasks(ctx.db)
   tasks
   |> task.task_list_to_json()
   |> json.to_string_tree()
@@ -33,7 +34,7 @@ fn handle_insert_task(req: Request, ctx: Context) -> Response {
     decode.success(description)
   })
 
-  let assert Ok(task) = task.insert_task(description, ctx.db)
+  let assert Ok(task) = task_db.insert_task(description, ctx.db)
   task
   |> task.task_to_json()
   |> json.to_string_tree()
@@ -41,12 +42,15 @@ fn handle_insert_task(req: Request, ctx: Context) -> Response {
 }
 
 fn handle_update_task(req: Request, ctx: Context, id: String) -> Response {
-  use id <- web.require_decoded_param(id, uuid.from_string)
-  use task <- web.require_decoded_json(req, task.make_task_decoder())
+  use task <- web.require_decoded_json(req, task.task_decoder())
   case id == task.id {
-    False -> wisp.not_found()
+    False ->
+      wisp.html_response(
+        "ID didn't match URL" |> string_tree.from_string(),
+        400,
+      )
     True -> {
-      let assert Ok(task) = task.update_task(task, ctx.db)
+      let assert Ok(task) = task_db.update_task(task, ctx.db)
       task
       |> task.task_to_json()
       |> json.to_string_tree()
@@ -58,7 +62,7 @@ fn handle_update_task(req: Request, ctx: Context, id: String) -> Response {
 fn handle_delete_task(_req: Request, ctx: Context, id: String) -> Response {
   use id <- web.require_decoded_param(id, uuid.from_string)
 
-  let assert Ok(deleted) = task.delete_task(id, ctx.db)
+  let assert Ok(deleted) = task_db.delete_task(id, ctx.db)
   case deleted {
     True -> wisp.html_response("Ok" |> string_tree.from_string(), 200)
     False -> wisp.not_found()

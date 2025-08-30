@@ -22,6 +22,8 @@
           just
           ripgrep
           entr
+          inotify-tools
+          esbuild
         ];
         DATABASE_URL = "postgres://postgres:postgres@localhost:5432/postgres";
       };

@@ -1,7 +1,10 @@
 import envoy
 import gleam/dynamic/decode
+import gleam/http
+import gleam/http/response
 import gleam/json
 import gleam/string
+import gleam/string_tree
 import pog
 import wisp.{type Request, type Response}
 
@@ -16,11 +19,28 @@ fn logger(req: Request, next: fn() -> Response) {
   }
 }
 
+fn cors(req: Request, next: fn() -> Response) {
+  case req.method {
+    http.Options ->
+      wisp.html_response("" |> string_tree.from_string(), 200)
+      |> response.set_header("Access-Control-Allow-Origin", "*")
+      |> response.set_header("Access-Control-Allow-Methods", "*")
+      |> response.set_header("Access-Control-Allow-Headers", "*")
+    _ ->
+      next()
+      |> response.set_header("Access-Control-Allow-Origin", "*")
+      |> response.set_header("Access-Control-Allow-Methods", "*")
+      |> response.set_header("Access-Control-Allow-Headers", "*")
+  }
+}
+
 pub fn middleware(req: Request, handle_request: fn(Request) -> Response) {
   let req = wisp.method_override(req)
   use <- logger(req)
   use <- wisp.rescue_crashes()
+  use <- cors(req)
   use req <- wisp.handle_head(req)
+
   handle_request(req)
 }
 
