@@ -20,17 +20,19 @@ fn logger(req: Request, next: fn() -> Response) {
 }
 
 fn cors(req: Request, next: fn() -> Response) {
+  let add_cors_headers = fn(req) {
+    req
+    |> response.set_header("Access-Control-Allow-Origin", "*")
+    |> response.set_header("Access-Control-Allow-Methods", "*")
+    |> response.set_header("Access-Control-Allow-Headers", "*")
+  }
   case req.method {
     http.Options ->
       wisp.html_response("" |> string_tree.from_string(), 200)
-      |> response.set_header("Access-Control-Allow-Origin", "*")
-      |> response.set_header("Access-Control-Allow-Methods", "*")
-      |> response.set_header("Access-Control-Allow-Headers", "*")
+      |> add_cors_headers()
     _ ->
       next()
-      |> response.set_header("Access-Control-Allow-Origin", "*")
-      |> response.set_header("Access-Control-Allow-Methods", "*")
-      |> response.set_header("Access-Control-Allow-Headers", "*")
+      |> add_cors_headers()
   }
 }
 
