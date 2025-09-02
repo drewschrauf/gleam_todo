@@ -11,6 +11,7 @@ import lustre/event
 import lustre_http
 import remote_data.{type RemoteData, Failure, Loading, NotRequested, Success}
 import shared/task.{type Task}
+import sketch/frontend_styles
 
 pub fn main() -> Nil {
   let app = lustre.application(init, update, view)
@@ -119,7 +120,7 @@ fn on_specific_keydown(target_key: String, msg: msg) -> attribute.Attribute(msg)
 
 fn view(model: Model) {
   element.fragment([
-    html.h1([], [element.text("Tasks!")]),
+    html.h1([attribute.class(frontend_styles.title)], [element.text("Tasks!")]),
     case model.tasks {
       NotRequested | Loading -> element.text("Loading...")
       Failure(_) -> element.text("Something went wrong")
@@ -134,15 +135,23 @@ fn view(model: Model) {
                   |> list.map(fn(task) {
                     #(
                       task.id,
-                      html.li([], [
-                        element.text(task.description),
-                        html.button(
-                          [event.on_click(UserClickedDelete(task.id))],
-                          [
-                            element.text("x"),
-                          ],
-                        ),
-                      ]),
+                      html.li(
+                        [
+                          attribute.class(frontend_styles.task),
+                          attribute.classes([
+                            #(frontend_styles.task_done, task.done),
+                          ]),
+                        ],
+                        [
+                          element.text(task.description),
+                          html.button(
+                            [event.on_click(UserClickedDelete(task.id))],
+                            [
+                              element.text("x"),
+                            ],
+                          ),
+                        ],
+                      ),
                     )
                   }),
               )

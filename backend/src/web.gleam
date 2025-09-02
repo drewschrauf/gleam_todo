@@ -79,3 +79,14 @@ pub fn require_decoded_param(
     Error(_) -> wisp.not_found()
   }
 }
+
+pub fn handle_error(
+  result: Result(a, b),
+  on_error: fn(b) -> c,
+  on_ok: fn(a) -> c,
+) {
+  case result {
+    Ok(data) -> on_ok(data)
+    Error(error) -> on_error(error)
+  }
+}

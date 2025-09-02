@@ -1,9 +1,11 @@
+import gleam/bool
 import gleam/dynamic/decode
 import gleam/http
 import gleam/json
 import gleam/string_tree
 import shared/task
 import task/task as task_db
+import types/errors
 import web.{type Context}
 import wisp.{type Request, type Response}
 import youid/uuid
@@ -21,7 +23,10 @@ pub fn handle_request(req: Request, ctx: Context) {
 }
 
 fn handle_get_all_tasks(_req: Request, ctx: Context) -> Response {
-  let assert Ok(tasks) = task_db.get_all_tasks(ctx.db)
+  use tasks <- web.handle_error(task_db.get_all_tasks(ctx.db), fn(_) {
+    wisp.internal_server_error()
+  })
+
   tasks
   |> task.task_list_to_json()
   |> json.to_string_tree()
@@ -34,7 +39,10 @@ fn handle_insert_task(req: Request, ctx: Context) -> Response {
     decode.success(description)
   })
 
-  let assert Ok(task) = task_db.insert_task(description, ctx.db)
+  use task <- web.handle_error(task_db.insert_task(description, ctx.db), fn(_) {
+    wisp.internal_server_error()
+  })
+
   task
   |> task.task_to_json()
   |> json.to_string_tree()
@@ -43,28 +51,33 @@ fn handle_insert_task(req: Request, ctx: Context) -> Response {
 
 fn handle_update_task(req: Request, ctx: Context, id: String) -> Response {
   use task <- web.require_decoded_json(req, task.task_decoder())
-  case id == task.id {
-    False ->
-      wisp.html_response(
-        "ID didn't match URL" |> string_tree.from_string(),
-        400,
-      )
-    True -> {
-      let assert Ok(task) = task_db.update_task(task, ctx.db)
-      task
-      |> task.task_to_json()
-      |> json.to_string_tree()
-      |> wisp.json_response(200)
+
+  use <- bool.lazy_guard(id == task.id, otherwise: fn() {
+    wisp.html_response("ID didn't match URL" |> string_tree.from_string(), 400)
+  })
+
+  use task <- web.handle_error(task_db.update_task(task, ctx.db), fn(error) {
+    case error {
+      errors.DBNotFoundError -> wisp.not_found()
+      _ -> wisp.internal_server_error()
     }
-  }
+  })
+
+  task
+  |> task.task_to_json()
+  |> json.to_string_tree()
+  |> wisp.json_response(200)
 }
 
 fn handle_delete_task(_req: Request, ctx: Context, id: String) -> Response {
   use id <- web.require_decoded_param(id, uuid.from_string)
 
-  let assert Ok(deleted) = task_db.delete_task(id, ctx.db)
-  case deleted {
-    True -> wisp.html_response("Ok" |> string_tree.from_string(), 200)
-    False -> wisp.not_found()
-  }
+  use _ <- web.handle_error(task_db.delete_task(id, ctx.db), fn(error) {
+    case error {
+      errors.DBNotFoundError -> wisp.not_found()
+      _ -> wisp.internal_server_error()
+    }
+  })
+
+  wisp.html_response("Ok" |> string_tree.from_string(), 200)
 }

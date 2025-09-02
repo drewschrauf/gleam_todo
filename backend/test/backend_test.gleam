@@ -98,22 +98,22 @@ pub fn update_test() {
   task.done |> should.equal(True)
 }
 
-// pub fn update_not_found_test() {
-//   use context <- with_context()
-//
-//   let id = uuid.v7() |> uuid.to_string()
-//
-//   let response =
-//     testing.post_json(
-//       "/tasks/" <> id,
-//       [],
-//       task.Task(id:, description: "Buy eggs", done: True)
-//         |> task.task_to_json(),
-//     )
-//     |> router.handle_request(context)
-//
-//   response.status |> should.equal(404)
-// }
+pub fn update_not_found_test() {
+  use context <- with_context()
+
+  let id = uuid.v7() |> uuid.to_string()
+
+  let response =
+    testing.post_json(
+      "/tasks/" <> id,
+      [],
+      task.Task(id:, description: "Buy eggs", done: True)
+        |> task.task_to_json(),
+    )
+    |> router.handle_request(context)
+
+  response.status |> should.equal(404)
+}
 
 pub fn update_id_mismatch_test() {
   use context <- with_context()

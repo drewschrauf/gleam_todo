@@ -19,7 +19,16 @@ shared = { path = "../shared"}
 lustre_http = ">= 1.0.0 and < 2.0.0"
 gleam_json = ">= 3.0.2 and < 4.0.0"
 gleam_http = ">= 4.1.1 and < 5.0.0"
+sketch_css = ">= 2.1.0 and < 3.0.0"
+sketch = ">= 4.2.0 and < 5.0.0"
+sketch_lustre = ">= 3.1.1 and < 4.0.0"
 
 [dev-dependencies]
 gleeunit = ">= 1.0.0 and < 2.0.0"
 lustre_dev_tools = ">= 1.9.2 and < 2.0.0"
+
+[sketch_css]
+src = "src"
+dst = "priv/static"
+interface = "src/sketch"
+
