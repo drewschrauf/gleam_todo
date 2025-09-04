@@ -5,6 +5,7 @@
 ////
 
 import gleam/dynamic/decode
+import gleam/time/timestamp.{type Timestamp}
 import pog
 import youid/uuid.{type Uuid}
 
@@ -15,7 +16,12 @@ import youid/uuid.{type Uuid}
 /// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub type DeleteTaskRow {
-  DeleteTaskRow(id: Uuid, description: String, done: Bool)
+  DeleteTaskRow(
+    id: Uuid,
+    description: String,
+    done: Bool,
+    created_at: Timestamp,
+  )
 }
 
 /// Runs the `delete_task` query
@@ -32,7 +38,8 @@ pub fn delete_task(
     use id <- decode.field(0, uuid_decoder())
     use description <- decode.field(1, decode.string)
     use done <- decode.field(2, decode.bool)
-    decode.success(DeleteTaskRow(id:, description:, done:))
+    use created_at <- decode.field(3, pog.timestamp_decoder())
+    decode.success(DeleteTaskRow(id:, description:, done:, created_at:))
   }
 
   "DELETE FROM tasks WHERE tasks.id = $1 RETURNING *
@@ -50,7 +57,12 @@ pub fn delete_task(
 /// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub type GetAllTasksRow {
-  GetAllTasksRow(id: Uuid, description: String, done: Bool)
+  GetAllTasksRow(
+    id: Uuid,
+    description: String,
+    done: Bool,
+    created_at: Timestamp,
+  )
 }
 
 /// Runs the `get_all_tasks` query
@@ -66,10 +78,11 @@ pub fn get_all_tasks(
     use id <- decode.field(0, uuid_decoder())
     use description <- decode.field(1, decode.string)
     use done <- decode.field(2, decode.bool)
-    decode.success(GetAllTasksRow(id:, description:, done:))
+    use created_at <- decode.field(3, pog.timestamp_decoder())
+    decode.success(GetAllTasksRow(id:, description:, done:, created_at:))
   }
 
-  "SELECT * FROM tasks
+  "SELECT * FROM tasks ORDER BY created_at ASC
 "
   |> pog.query
   |> pog.returning(decoder)
@@ -83,7 +96,12 @@ pub fn get_all_tasks(
 /// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub type InsertTaskRow {
-  InsertTaskRow(id: Uuid, description: String, done: Bool)
+  InsertTaskRow(
+    id: Uuid,
+    description: String,
+    done: Bool,
+    created_at: Timestamp,
+  )
 }
 
 /// Runs the `insert_task` query
@@ -100,7 +118,8 @@ pub fn insert_task(
     use id <- decode.field(0, uuid_decoder())
     use description <- decode.field(1, decode.string)
     use done <- decode.field(2, decode.bool)
-    decode.success(InsertTaskRow(id:, description:, done:))
+    use created_at <- decode.field(3, pog.timestamp_decoder())
+    decode.success(InsertTaskRow(id:, description:, done:, created_at:))
   }
 
   "INSERT INTO tasks (description) VALUES ($1) RETURNING *
@@ -118,7 +137,12 @@ pub fn insert_task(
 /// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub type UpdateTaskRow {
-  UpdateTaskRow(id: Uuid, description: String, done: Bool)
+  UpdateTaskRow(
+    id: Uuid,
+    description: String,
+    done: Bool,
+    created_at: Timestamp,
+  )
 }
 
 /// Runs the `update_task` query
@@ -137,7 +161,8 @@ pub fn update_task(
     use id <- decode.field(0, uuid_decoder())
     use description <- decode.field(1, decode.string)
     use done <- decode.field(2, decode.bool)
-    decode.success(UpdateTaskRow(id:, description:, done:))
+    use created_at <- decode.field(3, pog.timestamp_decoder())
+    decode.success(UpdateTaskRow(id:, description:, done:, created_at:))
   }
 
   "UPDATE tasks SET description = $2, done = $3 WHERE id = $1 RETURNING *

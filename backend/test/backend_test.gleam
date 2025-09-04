@@ -1,6 +1,7 @@
 import gleam/erlang/process
 import gleam/json
 import gleam/list
+import gleam/time/timestamp
 import gleeunit
 import gleeunit/should
 import pog
@@ -40,7 +41,9 @@ pub fn get_all_test() {
     |> testing.string_body()
     |> json.parse(task.task_list_decoder())
 
-  tasks |> list.length() |> should.equal(2)
+  let assert [task1, task2] = tasks
+  task1.description |> should.equal("Buy milk")
+  task2.description |> should.equal("Buy eggs")
 }
 
 pub fn insert_test() {
@@ -77,6 +80,7 @@ pub fn update_test() {
         id: returned_task.id |> uuid.to_string(),
         description: "Buy eggs",
         done: True,
+        created_at: timestamp.system_time(),
       )
         |> task.task_to_json(),
     )
@@ -107,7 +111,12 @@ pub fn update_not_found_test() {
     testing.post_json(
       "/tasks/" <> id,
       [],
-      task.Task(id:, description: "Buy eggs", done: True)
+      task.Task(
+        id:,
+        description: "Buy eggs",
+        done: True,
+        created_at: timestamp.system_time(),
+      )
         |> task.task_to_json(),
     )
     |> router.handle_request(context)
@@ -123,12 +132,13 @@ pub fn update_id_mismatch_test() {
 
   let response =
     testing.post_json(
-      "/tasks/" <> returned_task.id |> uuid.to_string(),
+      "/tasks/" <> uuid.v7() |> uuid.to_string(),
       [],
       task.Task(
-        id: uuid.v7() |> uuid.to_string(),
+        id: returned_task.id |> uuid.to_string(),
         description: "Buy eggs",
         done: True,
+        created_at: timestamp.system_time(),
       )
         |> task.task_to_json(),
     )

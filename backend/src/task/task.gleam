@@ -20,6 +20,7 @@ pub fn get_all_tasks(db: pog.Connection) -> Result(List(Task), DBError) {
       id: row.id |> uuid.to_string(),
       description: row.description,
       done: row.done,
+      created_at: row.created_at,
     )
   })
   |> Ok()
@@ -42,6 +43,7 @@ pub fn insert_task(
     id: row.id |> uuid.to_string(),
     description: row.description,
     done: row.done,
+    created_at: row.created_at,
   ))
 }
 
@@ -66,6 +68,7 @@ pub fn update_task(task: Task, db: pog.Connection) -> Result(Task, DBError) {
     id: row.id |> uuid.to_string(),
     description: row.description,
     done: row.done,
+    created_at: row.created_at,
   ))
 }
 

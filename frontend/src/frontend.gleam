@@ -11,10 +11,13 @@ import lustre/event
 import lustre_http
 import remote_data.{type RemoteData, Failure, Loading, NotRequested, Success}
 import shared/task.{type Task}
-import sketch/frontend_styles
+import sketch/css
+import sketch/lustre as sketch_lustre
+import sketch/lustre/element.{class_name} as _
 
 pub fn main() -> Nil {
-  let app = lustre.application(init, update, view)
+  let assert Ok(stylesheet) = sketch_lustre.setup()
+  let app = lustre.application(init, update, view(_, stylesheet))
   let assert Ok(_) = lustre.start(app, "#app", Nil)
 
   Nil
@@ -118,9 +121,36 @@ fn on_specific_keydown(target_key: String, msg: msg) -> attribute.Attribute(msg)
   })
 }
 
-fn view(model: Model) {
-  element.fragment([
-    html.h1([attribute.class(frontend_styles.title)], [element.text("Tasks!")]),
+fn app_class() {
+  css.class([css.font_family("sans-serif")])
+}
+
+fn title_class() {
+  css.class([
+    css.color("red"),
+  ])
+}
+
+fn task_class(done: Bool) {
+  css.class(
+    []
+    |> list.append(case done {
+      True -> [css.text_decoration("line-through")]
+      False -> []
+    }),
+  )
+}
+
+fn view(model: Model, stylesheet) {
+  use <- sketch_lustre.render(stylesheet:, in: [sketch_lustre.node()])
+
+  html.div([attribute.class(app_class() |> class_name())], [
+    html.h1(
+      [
+        attribute.class(title_class() |> class_name()),
+      ],
+      [element.text("Tasks!")],
+    ),
     case model.tasks {
       NotRequested | Loading -> element.text("Loading...")
       Failure(_) -> element.text("Something went wrong")
@@ -136,12 +166,7 @@ fn view(model: Model) {
                     #(
                       task.id,
                       html.li(
-                        [
-                          attribute.class(frontend_styles.task),
-                          attribute.classes([
-                            #(frontend_styles.task_done, task.done),
-                          ]),
-                        ],
+                        [attribute.class(task_class(task.done) |> class_name())],
                         [
                           element.text(task.description),
                           html.button(

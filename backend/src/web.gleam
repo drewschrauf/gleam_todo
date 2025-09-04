@@ -36,7 +36,10 @@ fn cors(req: Request, next: fn() -> Response) {
   }
 }
 
-pub fn middleware(req: Request, handle_request: fn(Request) -> Response) {
+pub fn middleware(
+  req: Request,
+  handle_request: fn(Request) -> Response,
+) -> Response {
   let req = wisp.method_override(req)
   use <- logger(req)
   use <- wisp.rescue_crashes()
@@ -73,7 +76,7 @@ pub fn require_decoded_param(
   param: a,
   decoder: fn(a) -> Result(b, _),
   next: fn(b) -> Response,
-) {
+) -> Response {
   case decoder(param) {
     Ok(decoded) -> next(decoded)
     Error(_) -> wisp.not_found()
@@ -81,10 +84,10 @@ pub fn require_decoded_param(
 }
 
 pub fn handle_error(
-  result: Result(a, b),
-  on_error: fn(b) -> c,
-  on_ok: fn(a) -> c,
-) {
+  result: Result(data, error),
+  on_error: fn(error) -> result,
+  on_ok: fn(data) -> result,
+) -> result {
   case result {
     Ok(data) -> on_ok(data)
     Error(error) -> on_error(error)
