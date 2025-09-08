@@ -1,4 +1,7 @@
 import frontend/api
+import frontend/remote_data.{
+  type RemoteData, Failure, Loading, NotRequested, Success,
+}
 import gleam/dynamic/decode
 import gleam/list
 import lustre
@@ -9,9 +12,10 @@ import lustre/element/html
 import lustre/element/keyed
 import lustre/event
 import lustre_http
-import remote_data.{type RemoteData, Failure, Loading, NotRequested, Success}
 import shared/task.{type Task}
+import sketch
 import sketch/css
+import sketch/css/length.{px}
 import sketch/lustre as sketch_lustre
 import sketch/lustre/element.{class_name} as _
 
@@ -122,7 +126,11 @@ fn on_specific_keydown(target_key: String, msg: msg) -> attribute.Attribute(msg)
 }
 
 fn app_class() {
-  css.class([css.font_family("sans-serif")])
+  css.class([
+    css.font_family("sans-serif"),
+    css.max_width(800 |> px()),
+    css.margin_("0 auto"),
+  ])
 }
 
 fn title_class() {
@@ -131,9 +139,23 @@ fn title_class() {
   ])
 }
 
+fn task_list() {
+  css.class([
+    css.padding(0 |> px()),
+    css.display("flex"),
+    css.flex_direction("column"),
+    css.gap(8 |> px()),
+  ])
+}
+
 fn task_class(done: Bool) {
   css.class(
-    []
+    [
+      css.list_style_type("none"),
+      css.border("2px solid black"),
+      css.padding(8 |> px()),
+      css.box_shadow("4px 4px 0 black"),
+    ]
     |> list.append(case done {
       True -> [css.text_decoration("line-through")]
       False -> []
@@ -141,7 +163,7 @@ fn task_class(done: Bool) {
   )
 }
 
-fn view(model: Model, stylesheet) {
+fn view(model: Model, stylesheet: sketch.StyleSheet) {
   use <- sketch_lustre.render(stylesheet:, in: [sketch_lustre.node()])
 
   html.div([attribute.class(app_class() |> class_name())], [
@@ -160,7 +182,7 @@ fn view(model: Model, stylesheet) {
             [] -> html.p([], [element.text("No tasks!")])
             _ as tasks ->
               keyed.ul(
-                [],
+                [attribute.class(task_list() |> class_name())],
                 tasks
                   |> list.map(fn(task) {
                     #(
