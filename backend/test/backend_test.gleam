@@ -24,7 +24,8 @@ fn with_context(next: fn(web.Context) -> a) -> a {
   let assert Ok(_) = config |> pog.start()
   let connection = pog.named_connection(name)
 
-  let assert Ok(_) = pog.execute(pog.query("TRUNCATE TABLE tasks"), connection)
+  let assert Ok(_) =
+    pog.query("TRUNCATE TABLE tasks") |> pog.execute(connection)
 
   next(web.Context(db: connection))
 }

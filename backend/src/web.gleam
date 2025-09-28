@@ -74,7 +74,7 @@ pub fn require_decoded_json(
 /// Converts a parameter using the provided decoder. If the decoder fails, returns a 404.
 pub fn require_decoded_param(
   param: a,
-  decoder: fn(a) -> Result(b, _),
+  decoder: fn(a) -> Result(b, c),
   next: fn(b) -> Response,
 ) -> Response {
   case decoder(param) {

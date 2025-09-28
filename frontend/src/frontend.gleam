@@ -117,7 +117,7 @@ fn on_specific_keydown(target_key: String, msg: msg) -> attribute.Attribute(msg)
         |> decode.then(fn(key) {
           case key {
             key if key == target_key -> decode.success(Nil)
-            _ -> decode.failure(Nil, "Key wasn't Enter")
+            _ -> decode.failure(Nil, "Key wasn't " <> target_key)
           }
         }),
     )
